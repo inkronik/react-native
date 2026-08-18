@@ -94,10 +94,23 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 20.19.0
+          node-version: 24.19.0
           package-manager-cache: false
 
-      - name: Setup Java 11
+      - name: Setup Java 17 for Android SDK tools
+        uses: actions/setup-java@03ad4de0992f5dab5e18fcb136590ce7c4a0ac95 # v5.6.0
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup exact Android native toolchain
+        uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4.0.1
+        with:
+          cmdline-tools-version: '14742923'
+          log-accepted-android-sdk-licenses: false
+          packages: 'ndk;27.1.12297006 cmake;3.22.1'
+
+      - name: Setup Java 11 for React Native 0.65
         uses: actions/setup-java@03ad4de0992f5dab5e18fcb136590ce7c4a0ac95 # v5.6.0
         with:
           distribution: temurin
@@ -114,9 +127,6 @@ jobs:
       - name: Build package
         run: bun run build
 
-      - name: Install exact Android native toolchain
-        run: sdkmanager --install 'ndk;27.1.12297006' 'cmake;3.22.1'
-
       - name: Verify React Native 0.65 Android compatibility
         run: bun run check:compatibility:rn-0.65:android
 
@@ -132,7 +142,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 20.19.0
+          node-version: 24.19.0
           package-manager-cache: false
 
       - name: Setup Bun
