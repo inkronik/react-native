@@ -1,0 +1,4 @@
+rootProject.name = "InkronikReactNativeCompatibility"
+
+include ":inkronik_react-native"
+project(":inkronik_react-native").projectDir = new File(settingsDir, "../node_modules/@inkronik/react-native/android")

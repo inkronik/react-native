@@ -1,0 +1,26 @@
+{
+  "$schema": "./node_modules/react-native-test-app/schema.json",
+  "name": "InkronikNativeCrashHarness",
+  "displayName": "Inkronik Native Crash Harness",
+  "version": "0.1.0",
+  "singleApp": "harness",
+  "components": [
+    {
+      "appKey": "InkronikNativeCrashHarness",
+      "displayName": "Inkronik Native Crash Harness",
+      "slug": "harness"
+    }
+  ],
+  "resources": {
+    "android": ["dist/res", "dist/main.android.jsbundle"],
+    "ios": ["dist/assets", "dist/main.ios.jsbundle"]
+  },
+  "android": {
+    "package": "dev.inkronik.nativecrashharness",
+    "versionCode": 1
+  },
+  "ios": {
+    "bundleIdentifier": "dev.inkronik.nativecrashharness",
+    "buildNumber": "1"
+  }
+}

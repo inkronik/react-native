@@ -1,0 +1,8 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "allowJs": true,
+    "noEmit": true
+  },
+  "include": ["index.js", "../fixtures/native-crash-harness/App.tsx", "../fixtures/native-crash-harness/src/**/*.ts"]
+}

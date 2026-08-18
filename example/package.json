@@ -1,0 +1,38 @@
+{
+  "name": "@inkronik/react-native-native-crash-example",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "android": "react-native run-android",
+    "build:android": "react-native bundle --entry-file index.js --platform android --dev true --bundle-output dist/main.android.jsbundle --assets-dest dist/res",
+    "build:ios": "react-native bundle --entry-file index.js --platform ios --dev true --bundle-output dist/main.ios.jsbundle --assets-dest dist",
+    "configure": "configure-test-app --force --platforms android --platforms ios",
+    "ios": "react-native run-ios",
+    "start": "react-native start"
+  },
+  "dependencies": {
+    "@inkronik/native-crash-harness": "workspace:0.1.0",
+    "@inkronik/react-native": "file:..",
+    "react": "19.2.0",
+    "react-native": "0.83.4"
+  },
+  "devDependencies": {
+    "@babel/core": "7.29.7",
+    "@babel/preset-env": "7.29.7",
+    "@babel/runtime": "7.29.7",
+    "@react-native-community/cli": "20.0.0",
+    "@react-native-community/cli-platform-android": "20.0.0",
+    "@react-native-community/cli-platform-ios": "20.0.0",
+    "@react-native/babel-preset": "0.83.4",
+    "@react-native/metro-config": "0.83.4",
+    "@react-native/typescript-config": "0.83.4",
+    "@rnx-kit/metro-config": "2.2.4",
+    "@types/react": "19.2.18",
+    "react-native-monorepo-config": "0.4.0",
+    "react-native-test-app": "5.4.9",
+    "typescript": "5.9.3"
+  },
+  "engines": {
+    "node": ">=20.19.4"
+  }
+}

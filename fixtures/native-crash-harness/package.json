@@ -1,0 +1,7 @@
+{
+  "name": "@inkronik/native-crash-harness",
+  "version": "0.1.0",
+  "private": true,
+  "main": "index.js",
+  "react-native": "index.js"
+}

@@ -1,0 +1,106 @@
+buildscript {
+  def reactNativeManifest = null
+  for (def searchRoot in [rootProject.projectDir, projectDir]) {
+    def currentDirectory = searchRoot
+    while (currentDirectory != null && reactNativeManifest == null) {
+      def candidate = new File(currentDirectory, "node_modules/react-native/package.json")
+      reactNativeManifest = candidate.exists() ? candidate : null
+      currentDirectory = currentDirectory.parentFile
+    }
+  }
+  if (reactNativeManifest == null) {
+    throw new GradleException("Inkronik could not locate react-native/package.json")
+  }
+
+  def reactNativeVersion = new groovy.json.JsonSlurper().parse(reactNativeManifest).version.toString()
+  def reactNativeMinor = reactNativeVersion.tokenize('.')[1].toInteger()
+  def defaultKotlinVersion = reactNativeMinor >= 77 ? "2.0.21" : reactNativeMinor >= 73 ? "1.9.22" : reactNativeMinor >= 71 ? "1.7.20" : "1.5.31"
+  def kotlinVersion = rootProject.ext.has("kotlinVersion") ? rootProject.ext.get("kotlinVersion") : defaultKotlinVersion
+
+  repositories {
+    google()
+    mavenCentral()
+    gradlePluginPortal()
+  }
+
+  dependencies {
+    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${kotlinVersion}"
+    if (project == rootProject) {
+      def androidGradlePluginVersion = reactNativeMinor >= 71 ? "8.7.2" : "4.2.2"
+      classpath "com.android.tools.build:gradle:${androidGradlePluginVersion}"
+    }
+  }
+}
+
+def findNodeModuleManifest(String packageName) {
+  for (def searchRoot in [rootProject.projectDir, projectDir]) {
+    def currentDirectory = searchRoot
+    while (currentDirectory != null) {
+      def candidate = new File(currentDirectory, "node_modules/${packageName}/package.json")
+      if (candidate.exists()) return candidate
+      currentDirectory = currentDirectory.parentFile
+    }
+  }
+  throw new GradleException("Inkronik could not locate ${packageName}/package.json")
+}
+
+def reactNativeManifest = findNodeModuleManifest("react-native")
+def reactNativeRoot = reactNativeManifest.parentFile
+def reactNativeVersion = new groovy.json.JsonSlurper().parse(reactNativeManifest).version.toString()
+def reactNativeMinor = reactNativeVersion.tokenize('.')[1].toInteger()
+def reactNativeArtifact = reactNativeMinor >= 71 ? "react-android" : "react-native"
+def javaTarget = reactNativeMinor >= 73 ? JavaVersion.VERSION_17 : JavaVersion.VERSION_1_8
+def getExtOrDefault = { name, fallback -> rootProject.ext.has(name) ? rootProject.ext.get(name) : fallback }
+
+apply plugin: "com.android.library"
+apply plugin: "kotlin-android"
+
+repositories {
+  google()
+  mavenCentral()
+  maven { url reactNativeRoot.toPath().resolve("android").toFile() }
+}
+
+android {
+  if (project.android.hasProperty("namespace")) {
+    namespace "com.inkronik.reactnative"
+  }
+
+  compileSdkVersion getExtOrDefault("compileSdkVersion", 31)
+
+  defaultConfig {
+    minSdkVersion getExtOrDefault("minSdkVersion", 21)
+
+    externalNativeBuild {
+      cmake {
+        cppFlags "-std=c++17"
+      }
+    }
+  }
+
+  ndkVersion getExtOrDefault("ndkVersion", "27.1.12297006")
+
+  externalNativeBuild {
+    cmake {
+      path "src/main/cpp/CMakeLists.txt"
+      version "3.22.1"
+    }
+  }
+
+  compileOptions {
+    sourceCompatibility javaTarget
+    targetCompatibility javaTarget
+  }
+
+  kotlinOptions {
+    jvmTarget = javaTarget == JavaVersion.VERSION_17 ? "17" : "1.8"
+  }
+}
+
+dependencies {
+  implementation "com.facebook.react:${reactNativeArtifact}:${reactNativeVersion}"
+  compileOnly "com.facebook.infer.annotation:infer-annotation:0.18.0"
+  compileOnly "com.facebook.yoga:proguard-annotations:1.19.0"
+  compileOnly "com.google.code.findbugs:jsr305:3.0.2"
+  testImplementation "junit:junit:4.13.2"
+}

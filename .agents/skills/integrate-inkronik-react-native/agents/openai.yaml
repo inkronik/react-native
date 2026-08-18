@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Integrate Inkronik React Native'
+  short_description: 'Add Inkronik to a React Native app'
+  default_prompt: 'Use $integrate-inkronik-react-native to install and configure Inkronik in this React Native or Expo application.'

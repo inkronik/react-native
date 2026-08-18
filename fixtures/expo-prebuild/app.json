@@ -1,0 +1,14 @@
+{
+  "expo": {
+    "name": "Inkronik Expo Prebuild Fixture",
+    "slug": "inkronik-expo-prebuild-fixture",
+    "version": "0.1.0",
+    "newArchEnabled": true,
+    "android": {
+      "package": "dev.inkronik.expoprebuildfixture"
+    },
+    "ios": {
+      "bundleIdentifier": "dev.inkronik.expoprebuildfixture"
+    }
+  }
+}

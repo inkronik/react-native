@@ -1,0 +1,18 @@
+{
+  "git": {
+    "commit": false,
+    "push": false,
+    "tag": false
+  },
+  "github": {
+    "release": false
+  },
+  "npm": {
+    "publish": false
+  },
+  "plugins": {
+    "@release-it/conventional-changelog": {
+      "preset": "conventionalcommits"
+    }
+  }
+}

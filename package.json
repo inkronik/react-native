@@ -1,0 +1,131 @@
+{
+  "name": "@inkronik/react-native",
+  "version": "0.1.0",
+  "description": "Security-first Inkronik error monitoring and tracing SDK for React Native and Expo.",
+  "license": "MIT",
+  "type": "module",
+  "source": "./src/index.ts",
+  "react-native": "./lib/module/index.native.js",
+  "main": "./lib/module/index.js",
+  "types": "./lib/typescript/src/index.d.ts",
+  "exports": {
+    ".": {
+      "react-native": "./lib/module/index.native.js",
+      "types": "./lib/typescript/src/index.d.ts",
+      "default": "./lib/module/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "android",
+    "!android/build",
+    "!android/.cxx",
+    "!android/.gradle",
+    "!android/src/test",
+    "ios",
+    "!ios/build",
+    "!ios/Pods",
+    "src",
+    "!src/**/*.test.*",
+    "lib",
+    "!lib/**/*.test.*",
+    "LICENSE",
+    "NOTICE",
+    "docs/native-dependencies.md",
+    "README.md",
+    "SECURITY.md",
+    "InkronikReactNative.podspec"
+  ],
+  "scripts": {
+    "build": "bob build",
+    "build:clean": "node scripts/clean.mjs",
+    "audit": "node scripts/verify-security-patches.mjs && bun audit --audit-level=high --ignore=GHSA-5p2g-fcmc-qvqq --ignore=GHSA-w3rx-r6r6-pgpr",
+    "check:format": "prettier --check .",
+    "check:compatibility:rn-0.65:android": "node scripts/check-react-native-compatibility.mjs android",
+    "check:compatibility:rn-0.65:ios": "node scripts/check-react-native-compatibility.mjs ios",
+    "check:expo-prebuild": "node scripts/check-expo-prebuild.mjs",
+    "check:lint": "eslint src --max-warnings 0",
+    "check:lint:native-harness": "eslint fixtures/native-crash-harness/App.tsx fixtures/native-crash-harness/src --max-warnings 0",
+    "example:android": "bun run --cwd example android",
+    "example:ios": "bun run --cwd example ios",
+    "example:start": "bun run --cwd example start",
+    "native-harness:android": "node scripts/run-native-crash-harness.mjs --platform android",
+    "native-harness:ios": "node scripts/run-native-crash-harness.mjs --platform ios",
+    "pack:check": "node scripts/check-package-consumer.mjs",
+    "release:version": "release-it --release-version --ci",
+    "test": "bun test ./src",
+    "test:native-harness": "bun test ./fixtures/native-crash-harness/src",
+    "typecheck": "tsc --noEmit --project tsconfig.json",
+    "typecheck:native-harness": "tsc --noEmit --project fixtures/native-crash-harness/tsconfig.json",
+    "typecheck:example": "tsc --noEmit --project example/tsconfig.json"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/inkronik/react-native.git"
+  },
+  "bugs": {
+    "url": "https://github.com/inkronik/react-native/issues"
+  },
+  "homepage": "https://github.com/inkronik/react-native#readme",
+  "keywords": [
+    "inkronik",
+    "react-native",
+    "expo",
+    "crash-reporting",
+    "observability",
+    "tracing"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "peerDependencies": {
+    "react": ">=17.0.0",
+    "react-native": ">=0.65.0"
+  },
+  "devDependencies": {
+    "@babel/runtime": "7.29.7",
+    "@inkronik/node-sdk": "1.4.0",
+    "@release-it/conventional-changelog": "12.0.0",
+    "@types/bun": "1.3.14",
+    "@types/react": "19.2.18",
+    "eslint": "10.8.1",
+    "eslint-config-codemask": "2.2.1",
+    "image-size": "1.2.1",
+    "prettier": "3.9.6",
+    "react-native-builder-bob": "0.43.0",
+    "release-it": "21.0.2",
+    "typescript": "5.9.3"
+  },
+  "packageManager": "bun@1.3.14",
+  "workspaces": [
+    "example",
+    "fixtures/native-crash-harness"
+  ],
+  "overrides": {
+    "deepmerge-ts": "8.0.0",
+    "postcss": "8.5.26"
+  },
+  "react-native-builder-bob": {
+    "source": "src",
+    "output": "lib",
+    "targets": [
+      [
+        "module",
+        {
+          "esm": true
+        }
+      ],
+      [
+        "typescript",
+        {
+          "project": "tsconfig.build.json"
+        }
+      ]
+    ]
+  },
+  "patchedDependencies": {
+    "image-size@1.2.1": "patches/image-size@1.2.1.patch",
+    "react-native@0.83.4": "patches/react-native@0.83.4.patch"
+  }
+}
