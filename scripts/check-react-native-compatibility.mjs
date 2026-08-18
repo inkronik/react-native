@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url'
 const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const fixtureRoot = join(packageRoot, 'fixtures', 'react-native-compatibility')
 const target = Object.freeze({ babelRuntime: '7.12.5', react: '17.0.2', reactNative: '0.65.0' })
+const maximumCommandOutputBytes = 50 * 1024 * 1024
 const platform = process.argv[2]
 
 assert.ok(platform === 'android' || platform === 'ios', 'Usage: node scripts/check-react-native-compatibility.mjs <android|ios>')
@@ -17,6 +18,7 @@ const run = ({ argumentsList, command, cwd, environment = {} }) => {
         cwd,
         encoding: 'utf8',
         env: { ...process.env, ...environment },
+        maxBuffer: maximumCommandOutputBytes,
         shell: false,
         stdio: 'pipe',
     })
@@ -116,6 +118,7 @@ try {
                 join(fixtureDirectory, 'android'),
                 ':inkronik_react-native:assembleDebug',
                 '--no-daemon',
+                '--console=plain',
                 '--stacktrace',
             ],
             command: 'bash',
