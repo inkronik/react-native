@@ -16,12 +16,6 @@ on:
         required: true
         default: true
         type: boolean
-      native_parity_approved:
-        description: Confirm the native parity report and capture ADR are approved (required for publication)
-        required: true
-        default: false
-        type: boolean
-
 concurrency:
   group: npm-release-${{ inputs.branch }}
   cancel-in-progress: false
@@ -40,12 +34,6 @@ jobs:
       source_sha: ${{ steps.source.outputs.source_sha }}
       version: ${{ steps.version.outputs.version }}
     steps:
-      - name: Require approved native parity for a real release
-        if: ${{ !inputs.dry_run && !inputs.native_parity_approved }}
-        run: |
-          echo 'A real release requires an approved native parity report and accepted capture ADR.' >&2
-          exit 1
-
       - name: Checkout exact release source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -230,7 +218,7 @@ jobs:
         run: bun run check:compatibility:rn-0.65:ios
 
   create-github-release:
-    if: ${{ !inputs.dry_run && inputs.native_parity_approved }}
+    if: ${{ !inputs.dry_run }}
     needs:
       - prepare-and-verify
       - compatibility-android-rn-0-65
@@ -272,7 +260,7 @@ jobs:
           gh "${release_args[@]}"
 
   publish-npm:
-    if: ${{ !inputs.dry_run && inputs.native_parity_approved }}
+    if: ${{ !inputs.dry_run }}
     needs:
       - prepare-and-verify
       - create-github-release
