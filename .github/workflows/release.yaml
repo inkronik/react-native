@@ -300,12 +300,7 @@ jobs:
 
       - name: Publish exact package artifact
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           RELEASE_BRANCH: ${{ inputs.branch }}
         run: |
-          if [[ -z "${NODE_AUTH_TOKEN:-}" ]]; then
-            echo 'NPM_TOKEN is required for npm publication.' >&2
-            exit 1
-          fi
           if [[ "$RELEASE_BRANCH" = "rc" ]]; then npm_tag=rc; else npm_tag=latest; fi
           npm publish ./release/package.tgz --access public --provenance --tag "$npm_tag" --ignore-scripts
