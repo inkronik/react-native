@@ -14,7 +14,7 @@
     "@inkronik/native-crash-harness": "workspace:0.1.0",
     "@inkronik/react-native": "file:..",
     "react": "19.2.8",
-    "react-native": "0.83.4"
+    "react-native": "0.87.0"
   },
   "devDependencies": {
     "@babel/core": "8.0.1",
@@ -23,9 +23,9 @@
     "@react-native-community/cli": "20.2.0",
     "@react-native-community/cli-platform-android": "20.2.0",
     "@react-native-community/cli-platform-ios": "20.2.0",
-    "@react-native/babel-preset": "0.83.4",
-    "@react-native/metro-config": "0.83.4",
-    "@react-native/typescript-config": "0.83.4",
+    "@react-native/babel-preset": "0.87.0",
+    "@react-native/metro-config": "0.87.0",
+    "@react-native/typescript-config": "0.87.0",
     "@rnx-kit/metro-config": "2.2.4",
     "@types/react": "19.2.18",
     "react-native-monorepo-config": "0.4.0",
