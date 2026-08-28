@@ -21,6 +21,36 @@ export interface ErrorUtilsLike {
     readonly setGlobalHandler: (handler: (error: Error, isFatal?: boolean) => void) => void
 }
 
+export interface ReactNativeStackFrame {
+    readonly column?: unknown
+    readonly file?: unknown
+    readonly lineNumber?: unknown
+    readonly methodName?: unknown
+}
+
+export interface ReactNativeExceptionData {
+    readonly componentStack?: unknown
+    readonly extraData?: unknown
+    readonly isFatal?: unknown
+    readonly message?: unknown
+    readonly name?: unknown
+    readonly originalMessage?: unknown
+    readonly stack?: unknown
+}
+
+export type ReactNativeExceptionListener = (data: unknown) => void
+export type ReactNativeRegisterExceptionListener = (listener: ReactNativeExceptionListener) => void
+export type ReactNativeHandleException = (error: Error, isFatal: boolean, reportToConsole: boolean) => boolean
+
+export interface InstallReactNativeExceptionListenerInput {
+    readonly captureException: (input: EngineCaptureExceptionInput) => string
+}
+
+export interface ReactNativeExceptionListenerState {
+    activeCaptureException?: InstallReactNativeExceptionListenerInput['captureException']
+    registeredWith?: ReactNativeRegisterExceptionListener
+}
+
 export interface UnhandledRejectionEventLike {
     readonly reason?: unknown
 }

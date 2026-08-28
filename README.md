@@ -54,8 +54,9 @@ organisation and application; the environment cannot widen its access.
 
 Call `clearUser()` during logout. Only an opaque ID is supported; the API has no email, name, IP, or arbitrary identity fields.
 
-Unhandled React Native JavaScript errors and Hermes promise rejections are captured without replacing the application's previous global error
-handler. Repeated capture of the same `Error` object is deduplicated for a bounded window, and bounded `Error.cause` chains are retained after
+Unhandled React Native JavaScript errors and Hermes promise rejections are captured without suppressing the application's existing error handling.
+The SDK uses React Native's always-available exception listener when present and retains `ErrorUtils` as the compatibility fallback for older
+runtimes. Repeated capture of the same `Error` object is deduplicated for a bounded window, and bounded `Error.cause` chains are retained after
 sanitization.
 
 ## Native capture baseline
