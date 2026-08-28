@@ -43,6 +43,7 @@ export interface HermesInternalLike {
 export interface ResolvedEngineConfiguration {
     readonly beforeSend: EngineInitializeInput['beforeSend']
     readonly endpoint: string
+    readonly environment: string
     readonly projectId: string
     readonly publicIngestKey: string
     readonly maxBreadcrumbs: number
@@ -57,11 +58,11 @@ export interface ResolvedEngineConfiguration {
 
 export interface EngineInitializeInput {
     readonly collectorUrl: string
+    readonly environment: string
     readonly projectId: string
     readonly publicIngestKey: string
     readonly release?: string
     readonly dist?: string
-    readonly environment?: string
     readonly maxBreadcrumbs: number
     readonly maxCacheItems: number
     readonly maxEventBytes: number

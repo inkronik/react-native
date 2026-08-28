@@ -1,10 +1,16 @@
 import { describe, expect, test } from 'bun:test'
 
-import { resolveConfiguration, validateMobileCredentials } from './configuration.js'
+import { normalizeTelemetryEnvironment, resolveConfiguration, validateMobileCredentials } from './configuration.js'
 
 const validKey = 'public_mobile_key_1234567890'
 
 describe('mobile configuration', () => {
+    test('normalizes a deployment environment to its canonical telemetry slug', () => {
+        expect(normalizeTelemetryEnvironment(' Development ')).toBe('development')
+        expect(() => normalizeTelemetryEnvironment('production/eu')).toThrow(TypeError)
+        expect(() => normalizeTelemetryEnvironment('')).toThrow(TypeError)
+    })
+
     test('validates an Inkronik collector URL without encoding credentials into it', () => {
         expect(
             validateMobileCredentials({
@@ -58,6 +64,7 @@ describe('mobile configuration', () => {
         const configuration = resolveConfiguration({
             options: {
                 collectorUrl: 'https://collector.example',
+                environment: 'development',
                 projectId: 'project',
                 publicIngestKey: validKey,
                 tracePropagationTargets: ['https://api.example'],
@@ -69,6 +76,7 @@ describe('mobile configuration', () => {
             resolveConfiguration({
                 options: {
                     collectorUrl: 'https://collector.example',
+                    environment: 'development',
                     projectId: 'project',
                     publicIngestKey: validKey,
                     tracePropagationTargets: ['https://api.example/private'],
@@ -81,6 +89,7 @@ describe('mobile configuration', () => {
         const configuration = resolveConfiguration({
             options: {
                 collectorUrl: 'https://collector.example',
+                environment: ' Development ',
                 projectId: 'project',
                 publicIngestKey: validKey,
             },
@@ -89,6 +98,7 @@ describe('mobile configuration', () => {
         expect(configuration).toMatchObject({
             cacheItemTtlMs: 86_400_000,
             dedupeWindowMs: 10_000,
+            environment: 'development',
             maxBreadcrumbs: 50,
             maxCacheItems: 30,
             maxEnvelopeBytes: 500_000,
@@ -100,6 +110,7 @@ describe('mobile configuration', () => {
             resolveConfiguration({
                 options: {
                     collectorUrl: 'https://collector.example',
+                    environment: 'development',
                     maxEnvelopeBytes: 2_000,
                     maxEventBytes: 3_000,
                     projectId: 'project',
@@ -111,6 +122,7 @@ describe('mobile configuration', () => {
             resolveConfiguration({
                 options: {
                     collectorUrl: 'https://collector.example',
+                    environment: 'development',
                     projectId: 'project',
                     publicIngestKey: validKey,
                     retryBaseDelayMs: 2_000,

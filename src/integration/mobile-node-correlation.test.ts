@@ -27,6 +27,7 @@ describe('mobile to Node SDK correlation', () => {
             collectorUrl: 'https://collector.example',
             debug: false,
             dedupeWindowMs: 10_000,
+            environment: 'development',
             maxBreadcrumbs: 50,
             maxCacheItems: 30,
             maxEnvelopeBytes: 500_000,
@@ -98,6 +99,7 @@ describe('mobile to Node SDK correlation', () => {
         const serverSpan = nodeBatches.flatMap(batch => batch.signals).find(signal => signal.signal_type === 'span')
         const serverPayload = serverSpan?.payload as NodeSpanPayload | undefined
 
+        expect(mobileEnvelope.environment).toBe('development')
         expect(mobileSpan?.span?.trace.traceId).toBe(serverPayload?.trace_id)
         expect(mobileSpan?.span?.trace.spanId).toBe(serverPayload?.parent_span_id)
         expect(serverPayload?.span_id).not.toBe(serverPayload?.parent_span_id)

@@ -47,6 +47,11 @@ const Root = () => (
 )
 ```
 
+`environment` is required and normalized to a lowercase telemetry slug. It identifies the deployment
+sending each envelope, so the same application-scoped public mobile key can be reused by development,
+staging, and production builds without mixing their telemetry. The key still determines the owning
+organisation and application; the environment cannot widen its access.
+
 Call `clearUser()` during logout. Only an opaque ID is supported; the API has no email, name, IP, or arbitrary identity fields.
 
 Unhandled React Native JavaScript errors and Hermes promise rejections are captured without replacing the application's previous global error

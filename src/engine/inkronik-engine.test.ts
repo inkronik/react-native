@@ -58,6 +58,7 @@ const createInitializedEngine = (overrides: Partial<EngineInitializeInput>): Ink
         debug: false,
         cacheItemTtlMs: 86_400_000,
         dedupeWindowMs: 10_000,
+        environment: 'development',
         maxBreadcrumbs: 50,
         maxCacheItems: 30,
         maxEnvelopeBytes: 500_000,
@@ -96,6 +97,7 @@ describe('Inkronik-owned capture engine', () => {
         expect(headers.get('baggage')).toBeNull()
 
         const body = getRequestBody(requests[0] as RecordedRequest)
+        expect(getEnvelope(requests[0] as RecordedRequest).environment).toBe('development')
         expect(body).toContain(eventId)
         expect(body).toContain('user-123')
         expect(body).toContain('https://app.example/index.bundle')

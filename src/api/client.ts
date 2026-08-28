@@ -100,11 +100,11 @@ export class InkronikClient {
 
         engine.initialize({
             collectorUrl: configuration.collectorUrl.toString(),
+            environment: configuration.environment,
             projectId: options.projectId,
             publicIngestKey: options.publicIngestKey,
             ...(options.release === undefined ? {} : { release: options.release }),
             ...(options.dist === undefined ? {} : { dist: options.dist }),
-            ...(options.environment === undefined ? {} : { environment: options.environment }),
             maxBreadcrumbs: configuration.maxBreadcrumbs,
             maxCacheItems: configuration.maxCacheItems,
             maxEventBytes: configuration.maxEventBytes,
@@ -129,7 +129,7 @@ export class InkronikClient {
                     maxCacheItems: configuration.maxCacheItems,
                     ...(options.release === undefined ? {} : { release: options.release }),
                     ...(options.dist === undefined ? {} : { dist: options.dist }),
-                    ...(options.environment === undefined ? {} : { environment: options.environment }),
+                    environment: configuration.environment,
                 }),
             )
             void nativeCaptureModule

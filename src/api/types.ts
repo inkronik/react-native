@@ -26,6 +26,7 @@ export interface ValidateMobileConfigurationInput {
 
 export interface ResolvedConfiguration {
     readonly collectorUrl: URL
+    readonly environment: string
     readonly traceOrigins: ReadonlySet<string>
     readonly autoInstrumentFetch: boolean
     readonly autoInstrumentXhr: boolean
