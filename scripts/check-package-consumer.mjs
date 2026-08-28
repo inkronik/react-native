@@ -97,6 +97,16 @@ try {
         assert.equal(typeof sdk.ErrorBoundary, 'function')
         assert.equal(sdk.isInitialized(), false)
         assert.equal(sdk.captureException({ error: new Error('consumer check') }), '')
+        assert.throws(
+            () => sdk.init({
+                collectorUrl: 'https://collector.example',
+                environment: 'production/eu',
+                projectId: 'consumer-project',
+                publicIngestKey: 'public_mobile_key_1234567890',
+            }),
+            /environment/,
+        )
+        assert.equal(sdk.isInitialized(), false)
     `
     run({ argumentsList: ['--input-type=module', '--eval', runtimeCheck], command: process.execPath, cwd: consumerDirectory })
 

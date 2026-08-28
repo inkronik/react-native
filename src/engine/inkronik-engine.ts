@@ -116,6 +116,7 @@ export class InkronikEngine implements Engine {
         this.configuration = {
             beforeSend: input.beforeSend,
             endpoint: buildEndpoint(input.collectorUrl),
+            environment: input.environment,
             projectId: input.projectId,
             publicIngestKey: input.publicIngestKey,
             maxBreadcrumbs: input.maxBreadcrumbs,
@@ -133,7 +134,7 @@ export class InkronikEngine implements Engine {
             sdk: { name: '@inkronik/react-native', version: SDK_VERSION },
             ...(input.release === undefined ? {} : { release: { value: input.release } }),
             ...(input.dist === undefined ? {} : { distribution: { value: input.dist } }),
-            ...(input.environment === undefined ? {} : { environment: { value: input.environment } }),
+            environment: { value: input.environment },
         }
         this.removeGlobalHandlers = this.installGlobalHandlers()
     }
@@ -353,7 +354,12 @@ export class InkronikEngine implements Engine {
         const selected = eligible.reduce<BatchSelection>(
             (batch, item) => {
                 const candidateItems = [...batch.items, item]
-                const envelope: MobileEnvelope = { schema_version: 1, sent_at: sentAt, events: candidateItems.map(candidate => candidate.event) }
+                const envelope: MobileEnvelope = {
+                    schema_version: 1,
+                    sent_at: sentAt,
+                    environment: configuration.environment,
+                    events: candidateItems.map(candidate => candidate.event),
+                }
                 const body = JSON.stringify(envelope)
                 return utf8ByteLength(body) <= configuration.maxEnvelopeBytes ? { body, items: candidateItems } : batch
             },
