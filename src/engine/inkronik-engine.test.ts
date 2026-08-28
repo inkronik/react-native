@@ -2,7 +2,14 @@ import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 
 import { InkronikEngine } from './inkronik-engine.js'
 import { sanitizeEngineEvent } from './sanitize-event.js'
-import type { EngineInitializeInput, ErrorUtilsLike, HermesInternalLike } from './types.js'
+import type {
+    EngineInitializeInput,
+    ErrorUtilsLike,
+    HermesInternalLike,
+    ReactNativeExceptionListener,
+    ReactNativeHandleException,
+    ReactNativeRegisterExceptionListener,
+} from './types.js'
 import type { NativePendingEvent } from '../native/types.js'
 import type { MobileEnvelope } from '../protocol/types.js'
 
@@ -14,6 +21,9 @@ interface RecordedRequest {
 const originalFetch = globalThis.fetch
 const originalErrorUtils = Reflect.get(globalThis, 'ErrorUtils')
 const originalHermesInternal = Reflect.get(globalThis, 'HermesInternal')
+const originalReactNativeExceptionListener = Reflect.get(globalThis, 'RN$registerExceptionListener')
+const originalReactNativeHandleException = Reflect.get(globalThis, 'RN$handleException')
+const originalReactNativeJsErrorHandling = Reflect.get(globalThis, 'RN$useAlwaysAvailableJSErrorHandling')
 const requests: Array<RecordedRequest> = []
 const responseStatuses: Array<number> = []
 
@@ -48,6 +58,12 @@ afterEach(() => {
     else Reflect.set(globalThis, 'ErrorUtils', originalErrorUtils)
     if (originalHermesInternal === undefined) Reflect.deleteProperty(globalThis, 'HermesInternal')
     else Reflect.set(globalThis, 'HermesInternal', originalHermesInternal)
+    if (originalReactNativeExceptionListener === undefined) Reflect.deleteProperty(globalThis, 'RN$registerExceptionListener')
+    else Reflect.set(globalThis, 'RN$registerExceptionListener', originalReactNativeExceptionListener)
+    if (originalReactNativeHandleException === undefined) Reflect.deleteProperty(globalThis, 'RN$handleException')
+    else Reflect.set(globalThis, 'RN$handleException', originalReactNativeHandleException)
+    if (originalReactNativeJsErrorHandling === undefined) Reflect.deleteProperty(globalThis, 'RN$useAlwaysAvailableJSErrorHandling')
+    else Reflect.set(globalThis, 'RN$useAlwaysAvailableJSErrorHandling', originalReactNativeJsErrorHandling)
 })
 
 const createInitializedEngine = (overrides: Partial<EngineInitializeInput>): InkronikEngine => {
@@ -281,6 +297,185 @@ describe('Inkronik-owned capture engine', () => {
 
         expect(await engine.flush(2_000)).toBeTrue()
         expect(previousErrors).toHaveLength(1)
+        expect(getRequestBody(requests[0] as RecordedRequest)).toContain('unhandledrejection')
+        await engine.close(0)
+    })
+
+    test('captures the always-available React Native exception pipeline without suppressing its default handler', async () => {
+        const previousErrors: Array<Error> = []
+        const state: { handler: (error: Error, isFatal?: boolean) => void } = { handler: error => previousErrors.push(error) }
+        const errorUtils: ErrorUtilsLike = {
+            getGlobalHandler: () => state.handler,
+            setGlobalHandler: handler => {
+                state.handler = handler
+            },
+        }
+        const originalHandler = state.handler
+        const listenerState: { listener?: ReactNativeExceptionListener; preventDefaultCalls: number; registrations: number } = {
+            preventDefaultCalls: 0,
+            registrations: 0,
+        }
+        const registerExceptionListener: ReactNativeRegisterExceptionListener = value => {
+            listenerState.registrations += 1
+            listenerState.listener = value
+        }
+
+        Reflect.set(globalThis, 'ErrorUtils', errorUtils)
+        Reflect.set(globalThis, 'RN$useAlwaysAvailableJSErrorHandling', true)
+        Reflect.set(globalThis, 'RN$registerExceptionListener', registerExceptionListener)
+        const firstEngine = createInitializedEngine({})
+        const hostileListenerData = new Proxy(
+            {},
+            {
+                get: () => {
+                    throw new Error('hostile listener data')
+                },
+            },
+        )
+
+        expect(state.handler).toBe(originalHandler)
+        expect(listenerState.registrations).toBe(1)
+        expect(() => listenerState.listener?.(hostileListenerData)).not.toThrow()
+        listenerState.listener?.({
+            componentStack: 'at CheckoutScreen (index.bundle:20:10)',
+            extraData: { rawStack: 'TypeError: token=secret checkout failed\n    at checkout (https://app.example/index.bundle?token=secret:10:20)' },
+            isFatal: true,
+            message: 'TypeError: token=secret checkout failed',
+            name: 'TypeError',
+            originalMessage: 'token=secret checkout failed',
+            preventDefault: () => {
+                listenerState.preventDefaultCalls += 1
+            },
+            stack: [{ column: 20, file: 'https://app.example/index.bundle?token=secret', lineNumber: 10, methodName: 'checkout' }],
+        })
+
+        expect(await firstEngine.flush(2_000)).toBeTrue()
+        expect(previousErrors).toHaveLength(0)
+        expect(listenerState.preventDefaultCalls).toBe(0)
+        const firstBody = getRequestBody(requests[0] as RecordedRequest)
+        expect(firstBody).toContain('react-native.exception-listener')
+        expect(firstBody).toContain('"level":"fatal"')
+        expect(firstBody).toContain('CheckoutScreen')
+        expect(firstBody).not.toContain('token=secret')
+        await firstEngine.close(0)
+
+        requests.length = 0
+        const secondEngine = createInitializedEngine({})
+        expect(listenerState.registrations).toBe(1)
+        listenerState.listener?.({
+            isFatal: false,
+            message: 'Error: second runtime error',
+            name: 'Error',
+            stack: [{ column: 8, file: 'index.bundle', lineNumber: 40, methodName: 'renderCheckout' }],
+        })
+        expect(await secondEngine.flush(2_000)).toBeTrue()
+        const secondBody = getRequestBody(requests[0] as RecordedRequest)
+        expect(secondBody).toContain('second runtime error')
+        expect(secondBody).toContain('renderCheckout')
+        expect(secondBody).not.toContain('Error: Error:')
+        await secondEngine.close(0)
+
+        requests.length = 0
+        listenerState.listener?.({ isFatal: true, message: 'after shutdown', name: 'Error', stack: [] })
+        await Bun.sleep(0)
+        expect(requests).toHaveLength(0)
+    })
+
+    test('keeps ErrorUtils as the fallback when the always-available React Native pipeline is disabled', async () => {
+        const previousErrors: Array<Error> = []
+        const state: { handler: (error: Error, isFatal?: boolean) => void } = { handler: error => previousErrors.push(error) }
+        const errorUtils: ErrorUtilsLike = {
+            getGlobalHandler: () => state.handler,
+            setGlobalHandler: handler => {
+                state.handler = handler
+            },
+        }
+        const listenerState = { registrations: 0 }
+
+        Reflect.set(globalThis, 'ErrorUtils', errorUtils)
+        Reflect.set(globalThis, 'RN$useAlwaysAvailableJSErrorHandling', false)
+        Reflect.set(globalThis, 'RN$registerExceptionListener', (() => {
+            listenerState.registrations += 1
+        }) satisfies ReactNativeRegisterExceptionListener)
+        const engine = createInitializedEngine({})
+        const error = new Error('legacy fatal error')
+
+        state.handler(error, true)
+
+        expect(await engine.flush(2_000)).toBeTrue()
+        expect(listenerState.registrations).toBe(0)
+        expect(previousErrors).toEqual([error])
+        expect(getRequestBody(requests[0] as RecordedRequest)).toContain('react-native.error-utils')
+        await engine.close(0)
+    })
+
+    test('falls back to ErrorUtils when React Native rejects exception-listener registration', async () => {
+        const previousErrors: Array<Error> = []
+        const state: { handler: (error: Error, isFatal?: boolean) => void } = { handler: error => previousErrors.push(error) }
+        const errorUtils: ErrorUtilsLike = {
+            getGlobalHandler: () => state.handler,
+            setGlobalHandler: handler => {
+                state.handler = handler
+            },
+        }
+
+        Reflect.set(globalThis, 'ErrorUtils', errorUtils)
+        Reflect.set(globalThis, 'RN$useAlwaysAvailableJSErrorHandling', true)
+        Reflect.set(globalThis, 'RN$registerExceptionListener', (() => {
+            throw new Error('listener unavailable')
+        }) satisfies ReactNativeRegisterExceptionListener)
+        const engine = createInitializedEngine({})
+        const error = new Error('fallback fatal error')
+
+        state.handler(error, true)
+
+        expect(await engine.flush(2_000)).toBeTrue()
+        expect(previousErrors).toEqual([error])
+        expect(getRequestBody(requests[0] as RecordedRequest)).toContain('react-native.error-utils')
+        await engine.close(0)
+    })
+
+    test('routes Hermes rejections through the always-available React Native pipeline exactly once', async () => {
+        const state: {
+            handledErrors: Array<Error>
+            listener?: ReactNativeExceptionListener
+            rejectionOptions?: NonNullable<Parameters<NonNullable<HermesInternalLike['enablePromiseRejectionTracker']>>[0]>
+        } = { handledErrors: [] }
+        const registerExceptionListener: ReactNativeRegisterExceptionListener = value => {
+            state.listener = value
+        }
+        const handleException: ReactNativeHandleException = (error, isFatal) => {
+            state.handledErrors.push(error)
+            const inkronikExtraData = Reflect.get(error, 'RN$ErrorExtraDataKey')
+            state.listener?.({
+                extraData: {
+                    ...(typeof inkronikExtraData === 'object' && inkronikExtraData !== null ? inkronikExtraData : {}),
+                    rawStack: error.stack,
+                },
+                isFatal,
+                message: error.message,
+                name: error.name,
+                stack: [],
+            })
+            return true
+        }
+        const hermesInternal: HermesInternalLike = {
+            enablePromiseRejectionTracker: options => {
+                if (options !== null) state.rejectionOptions = options
+            },
+        }
+
+        Reflect.set(globalThis, 'HermesInternal', hermesInternal)
+        Reflect.set(globalThis, 'RN$handleException', handleException)
+        Reflect.set(globalThis, 'RN$registerExceptionListener', registerExceptionListener)
+        Reflect.set(globalThis, 'RN$useAlwaysAvailableJSErrorHandling', true)
+        const engine = createInitializedEngine({})
+
+        state.rejectionOptions?.onUnhandled(9, new Error('async listener failure'))
+
+        expect(await engine.flush(2_000)).toBeTrue()
+        expect(state.handledErrors).toHaveLength(1)
+        expect(requests).toHaveLength(1)
         expect(getRequestBody(requests[0] as RecordedRequest)).toContain('unhandledrejection')
         await engine.close(0)
     })

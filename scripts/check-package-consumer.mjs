@@ -107,6 +107,35 @@ try {
             /environment/,
         )
         assert.equal(sdk.isInitialized(), false)
+        const requests = []
+        const listenerState = { registeredListener: undefined }
+        globalThis.RN$useAlwaysAvailableJSErrorHandling = true
+        globalThis.RN$registerExceptionListener = listener => {
+            listenerState.registeredListener = listener
+        }
+        globalThis.fetch = async (_input, init) => {
+            requests.push(JSON.parse(init.body))
+            return new Response('', { status: 202 })
+        }
+        sdk.init({
+            collectorUrl: 'https://collector.example',
+            environment: 'development',
+            projectId: 'consumer-project',
+            publicIngestKey: 'public_mobile_key_1234567890',
+        })
+        assert.equal(typeof listenerState.registeredListener, 'function')
+        listenerState.registeredListener({
+            extraData: { rawStack: 'Error: packed listener failure\\n    at render (index.bundle:10:20)' },
+            isFatal: true,
+            message: 'packed listener failure',
+            name: 'Error',
+            stack: [],
+        })
+        assert.equal(await sdk.flush({ timeoutMs: 2000 }), true)
+        assert.equal(requests.length, 1)
+        assert.equal(requests[0].environment, 'development')
+        assert.equal(requests[0].events[0].tags['inkronik.mechanism'], 'react-native.exception-listener')
+        assert.equal(await sdk.shutdown({ timeoutMs: 2000 }), true)
     `
     run({ argumentsList: ['--input-type=module', '--eval', runtimeCheck], command: process.execPath, cwd: consumerDirectory })
 
