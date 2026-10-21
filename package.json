@@ -1,6 +1,6 @@
 {
   "name": "@inkronik/react-native",
-  "version": "0.1.0",
+  "version": "1.0.1",
   "description": "Security-first Inkronik error monitoring and tracing SDK for React Native and Expo.",
   "license": "MIT",
   "type": "module",

@@ -1,7 +1,7 @@
 import { redactStack, redactText, sanitizeUrl } from '../privacy/sanitize.js'
 import type { MobileStackFrame } from '../protocol/types.js'
 
-const stackLinePattern = /^\s*at\s+(?:(.*?)\s+\()?(.+?):(\d+):(\d+)\)?\s*$/u
+const stackLinePattern = /^\s*at\s+(?:(.*?)\s*\()?(.+?):(\d+):(\d+)\)?\s*$/u
 const hermesStackLinePattern = /^\s*(.*?)@(.+?):(\d+):(\d+)\s*$/u
 
 const isApplicationFrame = (filename: string): boolean =>
@@ -14,7 +14,8 @@ const toFrame = (line: string): MobileStackFrame | undefined => {
         return undefined
     }
 
-    const functionName = redactText(match[1] === '' ? '<anonymous>' : match[1])
+    const rawFunctionName = match[1] as string | undefined
+    const functionName = redactText(rawFunctionName === undefined || rawFunctionName === '' ? '<anonymous>' : rawFunctionName)
     const rawFilename = match[2]
     const filename = rawFilename.includes('://') ? sanitizeUrl({ value: rawFilename }) : redactText(rawFilename.split(/[?#]/u, 1)[0] ?? '')
     const parsedLine = Number(match[3])

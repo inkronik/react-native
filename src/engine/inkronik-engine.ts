@@ -29,7 +29,7 @@ import type {
     UnhandledRejectionEventLike,
 } from './types.js'
 
-const SDK_VERSION = '0.1.0'
+const SDK_VERSION = '1.0.1'
 const MAX_CAUSE_CHAIN = 5
 
 const toHex = (bytes: Uint8Array): string => Array.from(bytes, value => value.toString(16).padStart(2, '0')).join('')
