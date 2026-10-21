@@ -1,6 +1,6 @@
 {
   "name": "@inkronik/react-native",
-  "version": "0.1.0",
+  "version": "1.0.1",
   "description": "Security-first Inkronik error monitoring and tracing SDK for React Native and Expo.",
   "license": "MIT",
   "type": "module",
@@ -39,7 +39,7 @@
   "scripts": {
     "build": "bob build",
     "build:clean": "node scripts/clean.mjs",
-    "audit": "node scripts/verify-security-patches.mjs && bun audit --audit-level=high --ignore=GHSA-5p2g-fcmc-qvqq --ignore=GHSA-w3rx-r6r6-pgpr",
+    "audit": "node scripts/verify-security-patches.mjs && bun audit --audit-level=high --ignore=GHSA-5p2g-fcmc-qvqq --ignore=GHSA-w3rx-r6r6-pgpr --ignore=GHSA-vfj7-8cjw-p6xm",
     "check:format": "prettier --check .",
     "check:compatibility:rn-0.65:android": "node scripts/check-react-native-compatibility.mjs android",
     "check:compatibility:rn-0.65:ios": "node scripts/check-react-native-compatibility.mjs ios",
@@ -92,6 +92,7 @@
     "eslint": "10.12.0",
     "eslint-config-codemask": "2.2.1",
     "image-size": "1.2.1",
+    "braces": "3.0.3",
     "prettier": "3.9.9",
     "react-native-builder-bob": "0.43.1",
     "release-it": "21.1.0",
@@ -107,7 +108,8 @@
     "postcss": "8.5.29",
     "shell-quote": "1.12.0",
     "undici": "7.30.0",
-    "compression": "1.8.2"
+    "compression": "1.8.2",
+    "basic-ftp": "6.2.3"
   },
   "react-native-builder-bob": {
     "source": "src",
@@ -129,6 +131,7 @@
   },
   "patchedDependencies": {
     "image-size@1.2.1": "patches/image-size@1.2.1.patch",
-    "react-native@0.83.4": "patches/react-native@0.83.4.patch"
+    "react-native@0.83.4": "patches/react-native@0.83.4.patch",
+    "braces@3.0.3": "patches/braces@3.0.3.patch"
   }
 }
