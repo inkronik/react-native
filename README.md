@@ -129,6 +129,8 @@ Only the sanitized route name is recorded; route parameters are never read.
 
 ## Development
 
+SDK type checks and Bob's declaration build use TypeScript 7, provided by the exact `@typescript/native` alias. The `typescript` alias supplies the TypeScript 6 compatibility API for ESLint and build tooling, following [Microsoft's side-by-side setup](https://devblogs.microsoft.com/typescript/announcing-typescript-7-0/#running-side-by-side-with-typescript-6.0). Bob selects the native compiler explicitly; workspace path aliases stay relative to the root configuration without `baseUrl`.
+
 ```bash
 bun install --frozen-lockfile
 bun run audit
