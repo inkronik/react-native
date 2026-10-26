@@ -4,7 +4,8 @@ This test-only harness deliberately terminates or blocks a React Native process 
 has no production export, is disabled by native code outside debug builds, and must never be linked into an application release target.
 
 The native fixture dependencies match the example's exact React Native version (`0.88.0`) on Android and iOS. When upgrading the example, update
-both native fixture pins and regenerate `example/ios/Podfile.lock` in the same change. CI installs that lockfile in deployment mode and builds the
+both native fixture pins and regenerate `example/ios/Podfile.lock` with CocoaPods `1.17.0` in the same change. CI uses that exact CocoaPods version
+and installs the lockfile in deployment mode, then builds the
 current iOS example and fixture; the separate React Native `0.65` jobs continue checking the public SDK's compatibility floor. The example's
 CocoaPods hook raises lower pod deployment targets to its React Native iOS minimum; it does not change the public SDK podspec's minimum.
 
@@ -56,7 +57,7 @@ Add the fixture pod to the debug test target only:
 pod "InkronikNativeCrashFixture", :path => "../../fixtures/native-crash-harness", :configurations => ["Debug"]
 ```
 
-Run `pod install`, use `fixtures/native-crash-harness/App.tsx` as the root component, and run on a physical iOS device without an attached debugger.
+Run `pod _1.17.0_ install --deployment`, use `fixtures/native-crash-harness/App.tsx` as the root component, and run on a physical iOS device without an attached debugger.
 The immediate low-level cases are checked after manual relaunch. `ios.hang` is explicitly marked `os-delayed`: MetricKit controls delivery, so the
 app may need to be relaunched again after the diagnostic becomes available.
 

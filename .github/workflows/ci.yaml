@@ -191,7 +191,7 @@ jobs:
 
       - name: Install locked iOS native dependencies
         working-directory: example/ios
-        run: pod install --deployment
+        run: pod _1.17.0_ install --deployment
 
       - name: Build current iOS example and native crash fixture
         working-directory: example/ios
