@@ -16,8 +16,6 @@ const requiredFiles = new Set([
     'SECURITY.md',
     'lib/module/index.js',
     'lib/module/index.native.js',
-    'lib/module/package.json',
-    'lib/typescript/package.json',
     'lib/typescript/src/index.d.ts',
     'package.json',
     'src/index.native.ts',
@@ -140,6 +138,8 @@ const validateManifest = ({ localManifest, packedManifest }) => {
     assert.equal(packedManifest.name, '@inkronik/react-native')
     assert.equal(packedManifest.name, localManifest.name)
     assert.equal(packedManifest.version, localManifest.version)
+    // Bob 0.44 inherits this package scope instead of emitting redundant nested manifests.
+    assert.equal(packedManifest.type, 'module', 'Built JavaScript and declarations must inherit an ESM package scope')
     assert.equal(packedManifest.main, './lib/module/index.js')
     assert.equal(packedManifest.types, './lib/typescript/src/index.d.ts')
     assert.equal(packedManifest.exports?.['.']?.['react-native'], './lib/module/index.native.js')
@@ -177,6 +177,9 @@ const validatePackedFiles = async ({ files, tarballPath }) => {
             assert.equal(file.mode & 0o111, 0, `Executable file mode is not allowed: ${file.path}`)
 
             const packedSource = readPackedFile({ filePath: file.path, tarballPath })
+            if (file.path === 'lib/module/package.json' || file.path === 'lib/typescript/package.json') {
+                assert.equal(JSON.parse(packedSource).type, 'module', `Unexpected package scope in ${file.path}`)
+            }
             assert.doesNotMatch(packedSource, secretPattern, `Secret-shaped value found in ${file.path}`)
             assert.doesNotMatch(packedSource, localPathPattern, `Local developer path found in ${file.path}`)
         }),
