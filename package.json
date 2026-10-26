@@ -132,7 +132,6 @@
     ]
   },
   "patchedDependencies": {
-    "react-native@0.83.4": "patches/react-native@0.83.4.patch",
     "braces@3.0.3": "patches/braces@3.0.3.patch"
   }
 }
