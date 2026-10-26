@@ -289,7 +289,12 @@ const simctl = ({ allowFailure = false, argumentsList, device }) =>
 const buildIos = ({ device }) => {
     runVisible({ argumentsList: ['run', 'build'], command: 'bun', environment: nodeToolchainEnvironment })
     runVisible({ argumentsList: ['run', '--cwd', 'example', 'build:ios'], command: 'bun', environment: nodeToolchainEnvironment })
-    runVisible({ argumentsList: ['install'], command: 'pod', cwd: join(exampleRoot, 'ios'), environment: nodeToolchainEnvironment })
+    runVisible({
+        argumentsList: ['_1.17.0_', 'install', '--deployment'],
+        command: 'pod',
+        cwd: join(exampleRoot, 'ios'),
+        environment: nodeToolchainEnvironment,
+    })
     runVisible({
         argumentsList: [
             '-quiet',

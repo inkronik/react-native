@@ -10,5 +10,5 @@ Pod::Spec.new do |s|
   s.source_files = "ios/*.{h,mm}"
   s.requires_arc = true
   s.compiler_flags = "-Wall -Wextra -Werror -fexceptions -fcxx-exceptions"
-  s.dependency "React-Core", "0.83.4"
+  s.dependency "React-Core", "0.88.0"
 end

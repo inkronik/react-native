@@ -88,7 +88,7 @@
     "@inkronik/node-sdk": "1.6.0",
     "@release-it/conventional-changelog": "12.0.2",
     "@types/bun": "1.4.4",
-    "@types/react": "19.2.18",
+    "@types/react": "19.3.0",
     "@typescript/native": "npm:typescript@7.0.2",
     "eslint": "10.13.0",
     "eslint-config-codemask": "2.2.1",
@@ -132,7 +132,6 @@
     ]
   },
   "patchedDependencies": {
-    "react-native@0.83.4": "patches/react-native@0.83.4.patch",
     "braces@3.0.3": "patches/braces@3.0.3.patch"
   }
 }
