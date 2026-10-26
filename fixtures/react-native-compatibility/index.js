@@ -4,6 +4,7 @@ import { captureMessage, init, setUser } from '@inkronik/react-native'
 
 init({
     collectorUrl: 'http://localhost:4318/mobile',
+    environment: 'development',
     projectId: 'compatibility-fixture',
     publicIngestKey: 'public_compatibility_fixture',
 })

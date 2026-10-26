@@ -47,10 +47,16 @@ const Root = () => (
 )
 ```
 
+`environment` is required and normalized to a lowercase telemetry slug. It identifies the deployment
+sending each envelope, so the same application-scoped public mobile key can be reused by development,
+staging, and production builds without mixing their telemetry. The key still determines the owning
+organisation and application; the environment cannot widen its access.
+
 Call `clearUser()` during logout. Only an opaque ID is supported; the API has no email, name, IP, or arbitrary identity fields.
 
-Unhandled React Native JavaScript errors and Hermes promise rejections are captured without replacing the application's previous global error
-handler. Repeated capture of the same `Error` object is deduplicated for a bounded window, and bounded `Error.cause` chains are retained after
+Unhandled React Native JavaScript errors and Hermes promise rejections are captured without suppressing the application's existing error handling.
+The SDK uses React Native's always-available exception listener when present and retains `ErrorUtils` as the compatibility fallback for older
+runtimes. Repeated capture of the same `Error` object is deduplicated for a bounded window, and bounded `Error.cause` chains are retained after
 sanitization.
 
 ## Native capture baseline
@@ -140,8 +146,9 @@ bun run check:compatibility:rn-0.65:android
 bun run check:compatibility:rn-0.65:ios
 ```
 
-The two documented `image-size` advisories are accepted only with an applied local regression patch because upstream has no fixed npm release. See
-[`docs/security-exceptions.md`](docs/security-exceptions.md). No other high-severity audit result is ignored.
+`image-size` is pinned to upstream-patched version `2.0.4`; the audit runs bounded ICNS/JXL/HEIF regression probes without exceptions for its advisories.
+The audit uses no advisory exceptions. The existing `braces` depth-limit patch and regression checks remain in place. See
+[`docs/security-exceptions.md`](docs/security-exceptions.md).
 
 Source maps and native debug artifacts are intentionally not uploaded by this package or an install lifecycle script. A separate, explicit
 Inkronik CLI will perform one-time artifact uploads; this SDK already emits the release, distribution, addresses, and build IDs needed to correlate

@@ -7,9 +7,9 @@ export interface InkronikOptions {
     readonly collectorUrl: string
     readonly publicIngestKey: string
     readonly projectId: string
+    readonly environment: string
     readonly release?: string
     readonly dist?: string
-    readonly environment?: string
     readonly tracePropagationTargets?: ReadonlyArray<string>
     readonly autoInstrumentFetch?: boolean
     readonly autoInstrumentXhr?: boolean

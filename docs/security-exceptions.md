@@ -1,22 +1,24 @@
-# Temporary security exceptions
+# Security patches and exceptions
 
 ## `image-size` CVE-2025-71329 and CVE-2025-71330
 
-Status: temporary, build tooling only  
-Review on every dependency update and no later than 2026-09-17.
+Status: resolved by upstream version `2.0.4`; no audit exception or local patch.
 
-React Native `0.83.4` brings Metro `0.83.3`, which resolves `image-size@1.2.1`. The upstream project is archived and the GitHub advisories list no
-patched npm version. The vulnerable package is not shipped as runtime code by `@inkronik/react-native`; Metro uses it only while building an
-application.
+Both advisories were fixed in `2.0.3`. The workspace pins `image-size` to `2.0.4`. Its locked Metro `0.83.8` no longer depends on `image-size`, so
+there is no transitive `1.x` copy to patch. The old `image-size@1.2.1` patch and both audit ignores have been removed.
 
-The lockfile applies `patches/image-size@1.2.1.patch`. The existing package already guards zero-sized ISO boxes used by its HEIF/JXL parsers. The
-Inkronik patch adds strict ICNS entry bounds and rejects zero/undersized entries, closing the remaining non-advancing loop. CI executes
-`scripts/verify-security-patches.mjs` after the audit and fails if the patch is missing or ineffective.
+The audit checks that malformed ICNS entries and zero-sized JXL/HEIF boxes are rejected and a valid PNG is still parsed. The probe runs in a child
+process with a five-second deadline so an infinite-loop regression fails the gate. See
+[GHSA-5p2g-fcmc-qvqq](https://github.com/advisories/GHSA-5p2g-fcmc-qvqq) and
+[GHSA-w3rx-r6r6-pgpr](https://github.com/advisories/GHSA-w3rx-r6r6-pgpr).
 
-The two GHSA IDs are ignored by the audit command only together with this local regression check. They must be removed from the ignore list as soon as Metro
-replaces `image-size` or a maintained patched package is available.
+## `braces` depth hardening
+
+The [GHSA-vfj7-8cjw-p6xm advisory](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm) has been withdrawn, and the audit no longer ignores it.
+The existing `braces@3.0.3` patch remains as depth-limit hardening for parsing, compilation, expansion and stringification, including externally
+supplied ASTs. `scripts/verify-security-patches.mjs` still verifies all these entrypoints and ordinary brace expansion.
 
 ## PostCSS
 
-Expo's Metro configuration requested a vulnerable PostCSS range. The workspace overrides it to exact version `8.5.26`, which is newer than the
+Expo's Metro configuration requested a vulnerable PostCSS range. The workspace overrides it to exact version `8.5.29`, which is newer than the
 patched versions for CVE-2026-45623 and CVE-2026-73646. No audit exception is used.
