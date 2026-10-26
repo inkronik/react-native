@@ -9,9 +9,8 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "noEmit": true,
-    "baseUrl": ".",
     "paths": {
-      "@inkronik/react-native": ["src/index.ts"]
+      "@inkronik/react-native": ["./src/index.ts"]
     },
     "resolveJsonModule": true,
     "skipLibCheck": true,
