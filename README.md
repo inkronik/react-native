@@ -148,8 +148,9 @@ bun run check:compatibility:rn-0.65:android
 bun run check:compatibility:rn-0.65:ios
 ```
 
-The two documented `image-size` advisories are accepted only with an applied local regression patch because upstream has no fixed npm release. See
-[`docs/security-exceptions.md`](docs/security-exceptions.md). No other high-severity audit result is ignored.
+`image-size` is pinned to upstream-patched version `2.0.4`; the audit runs bounded ICNS/JXL/HEIF regression probes without exceptions for its advisories.
+The audit uses no advisory exceptions. The existing `braces` depth-limit patch and regression checks remain in place. See
+[`docs/security-exceptions.md`](docs/security-exceptions.md).
 
 Source maps and native debug artifacts are intentionally not uploaded by this package or an install lifecycle script. A separate, explicit
 Inkronik CLI will perform one-time artifact uploads; this SDK already emits the release, distribution, addresses, and build IDs needed to correlate

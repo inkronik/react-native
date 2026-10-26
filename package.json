@@ -39,7 +39,7 @@
   "scripts": {
     "build": "bob build",
     "build:clean": "node scripts/clean.mjs",
-    "audit": "node scripts/verify-security-patches.mjs && bun audit --audit-level=high --ignore=GHSA-5p2g-fcmc-qvqq --ignore=GHSA-w3rx-r6r6-pgpr --ignore=GHSA-vfj7-8cjw-p6xm",
+    "audit": "node scripts/verify-security-patches.mjs && bun audit --audit-level=high",
     "check:format": "prettier --check .",
     "check:compatibility:rn-0.65:android": "node scripts/check-react-native-compatibility.mjs android",
     "check:compatibility:rn-0.65:ios": "node scripts/check-react-native-compatibility.mjs ios",
@@ -92,7 +92,7 @@
     "@typescript/native": "npm:typescript@7.0.2",
     "eslint": "10.13.0",
     "eslint-config-codemask": "2.2.1",
-    "image-size": "1.2.1",
+    "image-size": "2.0.4",
     "braces": "3.0.3",
     "prettier": "3.9.10",
     "react-native-builder-bob": "0.44.1",
@@ -132,7 +132,6 @@
     ]
   },
   "patchedDependencies": {
-    "image-size@1.2.1": "patches/image-size@1.2.1.patch",
     "react-native@0.83.4": "patches/react-native@0.83.4.patch",
     "braces@3.0.3": "patches/braces@3.0.3.patch"
   }
