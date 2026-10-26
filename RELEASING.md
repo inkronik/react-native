@@ -25,3 +25,13 @@ create the GitHub release at the recorded source SHA and publish the downloaded,
 
 Never publish from a pull request, developer laptop, different tarball, or mutable branch reference. Never merge a pull request as part of release
 automation.
+
+## 1.0.1 patch
+
+Fixes dropped JavaScript exceptions when a V8 stack frame has no function name. Missing and empty names now become `<anonymous>`; named V8 and
+Hermes frames retain their function names and locations. Parser regression tests cover both formats. The packed-consumer check captures a
+runtime-generated V8 error with `Error.cause` through the public API and verifies delivery, parsed frames, and credential redaction.
+
+The package manifest and SDK envelope version are aligned at `1.0.1`. Rebuild before packing; `pack:check` verifies the compiled package entrypoint.
+The event protocol and collector API are unchanged, so no MCP contract update is required. Consumers on `0.1.1` should update to exact version
+`1.0.1` after the verified artifact is published through the Release workflow.

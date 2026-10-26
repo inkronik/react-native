@@ -47,6 +47,7 @@ const createClient = ({ engine, onError }: { readonly engine: Engine; readonly o
         engine,
         options: {
             collectorUrl: 'https://collector.example/mobile',
+            environment: ' Development ',
             projectId: 'project',
             publicIngestKey: 'public_mobile_key_1234567890',
             ...(onError === undefined ? {} : { onError }),
@@ -65,6 +66,7 @@ describe('Inkronik client', () => {
         const unsafeEvent: EngineEvent = { request: { body: 'secret' }, user: { email: 'person@example.com', id: 'user-1' } }
         expect(initialized.beforeSend(unsafeEvent)).toEqual({ user: { id: 'user-1' } })
         expect(initialized.collectorUrl).toBe('https://collector.example/mobile')
+        expect(initialized.environment).toBe('development')
         expect(initialized.projectId).toBe('project')
         expect(initialized.publicIngestKey).toBe('public_mobile_key_1234567890')
     })
@@ -112,6 +114,7 @@ describe('Inkronik client', () => {
 
         await Bun.sleep(0)
         expect(configured).toHaveLength(1)
+        expect(JSON.parse(configured[0] ?? '{}')).toMatchObject({ environment: 'development' })
         expect(configured[0]).not.toContain('collector')
         expect(configured[0]).not.toContain('public_mobile_key')
         expect(calls.nativeEvents).toEqual([nativeEvent])

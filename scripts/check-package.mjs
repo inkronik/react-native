@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { constants, copyFile, lstat, readFile, rm } from 'node:fs/promises'
+import { constants, copyFile, readFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { dirname, isAbsolute, join, relative, resolve } from 'node:path'
 import { spawnSync } from 'node:child_process'
@@ -16,8 +16,6 @@ const requiredFiles = new Set([
     'SECURITY.md',
     'lib/module/index.js',
     'lib/module/index.native.js',
-    'lib/module/package.json',
-    'lib/typescript/package.json',
     'lib/typescript/src/index.d.ts',
     'package.json',
     'src/index.native.ts',
@@ -101,6 +99,7 @@ const run = ({ argumentsList, command }) => {
         cwd: packageRoot,
         encoding: 'utf8',
         env: { ...process.env, npm_config_cache: join(packageRoot, '.cache', 'npm') },
+        maxBuffer: maxUnpackedBytes + 1_000_000,
         shell: false,
     })
 
@@ -125,12 +124,22 @@ const validateTarIndex = ({ files, tarballPath }) => {
 
     const reportedPaths = files.map(file => file.path)
     assert.deepEqual(tarPaths.toSorted(), reportedPaths.toSorted(), 'The physical tar index differs from the npm pack report')
+
+    const tarEntries = run({ argumentsList: ['-tvzf', tarballPath], command: 'tar' })
+        .trim()
+        .split('\n')
+    assert.equal(tarEntries.length, files.length, 'The verbose tar index differs from the npm pack report')
+    tarEntries.forEach(entry => assert.ok(entry.startsWith('-'), `Non-file tar entry is not allowed: ${entry}`))
 }
+
+const readPackedFile = ({ filePath, tarballPath }) => run({ argumentsList: ['-xOf', tarballPath, `package/${filePath}`], command: 'tar' })
 
 const validateManifest = ({ localManifest, packedManifest }) => {
     assert.equal(packedManifest.name, '@inkronik/react-native')
     assert.equal(packedManifest.name, localManifest.name)
     assert.equal(packedManifest.version, localManifest.version)
+    // Bob 0.44 inherits this package scope instead of emitting redundant nested manifests.
+    assert.equal(packedManifest.type, 'module', 'Built JavaScript and declarations must inherit an ESM package scope')
     assert.equal(packedManifest.main, './lib/module/index.js')
     assert.equal(packedManifest.types, './lib/typescript/src/index.d.ts')
     assert.equal(packedManifest.exports?.['.']?.['react-native'], './lib/module/index.native.js')
@@ -149,7 +158,7 @@ const validateManifest = ({ localManifest, packedManifest }) => {
     }
 }
 
-const validatePackedFiles = async files => {
+const validatePackedFiles = async ({ files, tarballPath }) => {
     const paths = files.map(file => file.path)
     const uniquePaths = new Set(paths)
 
@@ -167,14 +176,12 @@ const validatePackedFiles = async files => {
             assert.doesNotMatch(file.path, forbiddenExtensionPattern, `Sensitive file type in package: ${file.path}`)
             assert.equal(file.mode & 0o111, 0, `Executable file mode is not allowed: ${file.path}`)
 
-            const sourcePath = join(packageRoot, file.path)
-            const sourceStats = await lstat(sourcePath)
-            assert.equal(sourceStats.isSymbolicLink(), false, `Symbolic links are not allowed: ${file.path}`)
-            assert.equal(sourceStats.isFile(), true, `Non-file package entry is not allowed: ${file.path}`)
-
-            const source = await readFile(sourcePath, 'utf8')
-            assert.doesNotMatch(source, secretPattern, `Secret-shaped value found in ${file.path}`)
-            assert.doesNotMatch(source, localPathPattern, `Local developer path found in ${file.path}`)
+            const packedSource = readPackedFile({ filePath: file.path, tarballPath })
+            if (file.path === 'lib/module/package.json' || file.path === 'lib/typescript/package.json') {
+                assert.equal(JSON.parse(packedSource).type, 'module', `Unexpected package scope in ${file.path}`)
+            }
+            assert.doesNotMatch(packedSource, secretPattern, `Secret-shaped value found in ${file.path}`)
+            assert.doesNotMatch(packedSource, localPathPattern, `Local developer path found in ${file.path}`)
         }),
     )
 }
@@ -206,7 +213,7 @@ try {
 
     validateManifest({ localManifest, packedManifest })
     validateTarIndex({ files: packResult.files, tarballPath })
-    await validatePackedFiles(packResult.files)
+    await validatePackedFiles({ files: packResult.files, tarballPath })
 
     if (outputPath !== undefined) {
         await copyFile(tarballPath, outputPath, constants.COPYFILE_EXCL)

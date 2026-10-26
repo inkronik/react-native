@@ -4,6 +4,7 @@ import type { MobileEnvelope, MobileEvent, MobileStackFrame } from '../protocol/
 import { secureRandomBytes } from '../tracing/trace-context.js'
 import type { BreadcrumbInput, CaptureContext, CaptureSpanInput, User } from '../types.js'
 import type { NativePendingEvent } from '../native/types.js'
+import { installReactNativeExceptionListener, REACT_NATIVE_MECHANISM_EXTRA_KEY, REACT_NATIVE_REJECTION_MECHANISM } from './react-native-exceptions.js'
 import { parseStack, sanitizeRawStack } from './stack.js'
 import type {
     BatchSelection,
@@ -22,12 +23,13 @@ import type {
     FlushQueueInput,
     HermesInternalLike,
     QueuedEvent,
+    ReactNativeHandleException,
     ResolvedEngineConfiguration,
     SelectBatchInput,
     UnhandledRejectionEventLike,
 } from './types.js'
 
-const SDK_VERSION = '0.1.0'
+const SDK_VERSION = '1.0.1'
 const MAX_CAUSE_CHAIN = 5
 
 const toHex = (bytes: Uint8Array): string => Array.from(bytes, value => value.toString(16).padStart(2, '0')).join('')
@@ -80,8 +82,13 @@ const utf8ByteLength = (value: string): number =>
 const toEngineEvent = (event: MobileEvent): EngineEvent => event as unknown as EngineEvent
 const fromEngineEvent = (event: EngineEvent): MobileEvent => event as unknown as MobileEvent
 
-const createRejectionError = ({ id, rejection }: { readonly id?: number; readonly rejection: unknown }): Error =>
-    new Error(id === undefined ? 'Unhandled promise rejection' : `Unhandled promise rejection (${id})`, { cause: rejection })
+const createRejectionError = ({ id, rejection }: { readonly id?: number; readonly rejection: unknown }): Error => {
+    const error = new Error(id === undefined ? 'Unhandled promise rejection' : `Unhandled promise rejection (${id})`, { cause: rejection })
+    Object.defineProperty(error, 'RN$ErrorExtraDataKey', {
+        value: { [REACT_NATIVE_MECHANISM_EXTRA_KEY]: REACT_NATIVE_REJECTION_MECHANISM },
+    })
+    return error
+}
 
 const toNativeFrames = (event: NativePendingEvent): ReadonlyArray<MobileStackFrame> =>
     (event.frames ?? []).map(frame => ({
@@ -116,6 +123,7 @@ export class InkronikEngine implements Engine {
         this.configuration = {
             beforeSend: input.beforeSend,
             endpoint: buildEndpoint(input.collectorUrl),
+            environment: input.environment,
             projectId: input.projectId,
             publicIngestKey: input.publicIngestKey,
             maxBreadcrumbs: input.maxBreadcrumbs,
@@ -133,7 +141,7 @@ export class InkronikEngine implements Engine {
             sdk: { name: '@inkronik/react-native', version: SDK_VERSION },
             ...(input.release === undefined ? {} : { release: { value: input.release } }),
             ...(input.dist === undefined ? {} : { distribution: { value: input.dist } }),
-            ...(input.environment === undefined ? {} : { environment: { value: input.environment } }),
+            environment: { value: input.environment },
         }
         this.removeGlobalHandlers = this.installGlobalHandlers()
     }
@@ -353,7 +361,12 @@ export class InkronikEngine implements Engine {
         const selected = eligible.reduce<BatchSelection>(
             (batch, item) => {
                 const candidateItems = [...batch.items, item]
-                const envelope: MobileEnvelope = { schema_version: 1, sent_at: sentAt, events: candidateItems.map(candidate => candidate.event) }
+                const envelope: MobileEnvelope = {
+                    schema_version: 1,
+                    sent_at: sentAt,
+                    environment: configuration.environment,
+                    events: candidateItems.map(candidate => candidate.event),
+                }
                 const body = JSON.stringify(envelope)
                 return utf8ByteLength(body) <= configuration.maxEnvelopeBytes ? { body, items: candidateItems } : batch
             },
@@ -482,6 +495,9 @@ export class InkronikEngine implements Engine {
     }
 
     private installGlobalHandlers(): () => void {
+        const removeReactNativeExceptionListener = installReactNativeExceptionListener({
+            captureException: input => this.captureException(input),
+        })
         const errorUtils = Reflect.get(globalThis, 'ErrorUtils') as ErrorUtilsLike | undefined
         const previousErrorHandler = errorUtils?.getGlobalHandler()
         const globalErrorHandler = (error: Error, isFatal = false): void => {
@@ -495,14 +511,28 @@ export class InkronikEngine implements Engine {
             previousErrorHandler?.(error, isFatal)
         }
 
-        errorUtils?.setGlobalHandler(globalErrorHandler)
+        if (removeReactNativeExceptionListener === undefined) errorUtils?.setGlobalHandler(globalErrorHandler)
 
         const captureRejection = ({ id, rejection }: { readonly id?: number; readonly rejection: unknown }): void => {
+            const rejectionError = createRejectionError({ id, rejection })
+            const reactNativeHandleException =
+                removeReactNativeExceptionListener === undefined
+                    ? undefined
+                    : (Reflect.get(globalThis, 'RN$handleException') as ReactNativeHandleException | undefined)
+
+            if (typeof reactNativeHandleException === 'function') {
+                try {
+                    if (reactNativeHandleException(rejectionError, false, true)) return
+                } catch {
+                    // Fall back to direct capture without allowing host error handling to escape into the application.
+                }
+            }
+
             this.captureException({
                 error: rejection,
                 context: { level: 'error', tags: { 'inkronik.handled': 'false', 'inkronik.mechanism': 'unhandledrejection' } },
             })
-            previousErrorHandler?.(createRejectionError({ id, rejection }), false)
+            previousErrorHandler?.(rejectionError, false)
         }
         const eventTarget = globalThis as unknown as Partial<BrowserEventTargetLike>
         const rejectionHandler = (event: UnhandledRejectionEventLike): void => captureRejection({ rejection: event.reason })
@@ -516,6 +546,7 @@ export class InkronikEngine implements Engine {
         })
 
         return () => {
+            removeReactNativeExceptionListener?.()
             if (errorUtils?.getGlobalHandler() === globalErrorHandler && previousErrorHandler !== undefined) {
                 errorUtils.setGlobalHandler(previousErrorHandler)
             }

@@ -2,7 +2,19 @@ import type { ResolveConfigurationInput, ResolvedConfiguration, ValidateIntegerI
 
 const publicKeyPattern = /^[A-Za-z0-9_-]{16,256}$/u
 const projectIdPattern = /^[A-Za-z0-9_-]{1,128}$/u
+const environmentPattern = /^[a-z0-9][a-z0-9._-]*$/u
+const environmentMaxLength = 63
 const localHosts = new Set(['127.0.0.1', '::1', 'localhost'])
+
+export const normalizeTelemetryEnvironment = (value: string): string => {
+    const environment = value.trim().toLowerCase()
+
+    if (environment.length === 0 || environment.length > environmentMaxLength || !environmentPattern.test(environment)) {
+        throw new TypeError('Inkronik environment must be a canonical slug containing only lowercase letters, numbers, dots, underscores, or dashes')
+    }
+
+    return environment
+}
 
 const validateInteger = ({ maximum, minimum, name, value }: ValidateIntegerInput): number => {
     if (!Number.isInteger(value) || value < minimum || value > maximum) {
@@ -72,6 +84,7 @@ const resolveTraceOrigins = (targets: ReadonlyArray<string>): ReadonlySet<string
 
 export const resolveConfiguration = ({ options }: ResolveConfigurationInput): ResolvedConfiguration => {
     const allowInsecureDevelopment = options.allowInsecureDevelopment === true
+    const environment = normalizeTelemetryEnvironment(options.environment)
     const traceOrigins = resolveTraceOrigins(options.tracePropagationTargets ?? [])
     const maxBreadcrumbs = options.maxBreadcrumbs ?? 50
     const maxCacheItems = options.maxCacheItems ?? 30
@@ -108,6 +121,7 @@ export const resolveConfiguration = ({ options }: ResolveConfigurationInput): Re
 
     return {
         collectorUrl,
+        environment,
         traceOrigins,
         autoInstrumentFetch: options.autoInstrumentFetch ?? traceOrigins.size > 0,
         autoInstrumentXhr: options.autoInstrumentXhr ?? traceOrigins.size > 0,

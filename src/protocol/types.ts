@@ -51,5 +51,6 @@ export interface MobileEvent {
 export interface MobileEnvelope {
     readonly schema_version: 1
     readonly sent_at: string
+    readonly environment: string
     readonly events: ReadonlyArray<MobileEvent>
 }
