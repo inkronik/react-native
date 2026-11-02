@@ -85,7 +85,7 @@
   },
   "devDependencies": {
     "@babel/runtime": "8.0.7",
-    "@inkronik/node-sdk": "1.6.0",
+    "@inkronik/node-sdk": "2.0.0",
     "@release-it/conventional-changelog": "12.0.2",
     "@types/bun": "1.4.4",
     "@types/react": "19.3.0",
