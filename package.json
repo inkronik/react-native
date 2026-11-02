@@ -84,7 +84,7 @@
     "react-native": ">=0.65.0"
   },
   "devDependencies": {
-    "@babel/runtime": "8.0.7",
+    "@babel/runtime": "8.0.10",
     "@inkronik/node-sdk": "1.6.0",
     "@release-it/conventional-changelog": "12.0.2",
     "@types/bun": "1.4.4",
