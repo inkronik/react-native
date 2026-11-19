@@ -54,7 +54,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: 24.22.1
+          node-version: 24.22.3
           package-manager-cache: false
 
       - name: Setup Bun
@@ -150,12 +150,13 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: 24.22.1
+          node-version: 24.22.3
           package-manager-cache: false
 
       - name: Setup Java 17 for Android SDK tools
-        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
         with:
+          problem-matcher: true
           distribution: temurin
           java-version: '17'
 
@@ -163,8 +164,9 @@ jobs:
         run: bash .github/scripts/setup-android.sh
 
       - name: Setup Java 11 for React Native 0.65
-        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
         with:
+          problem-matcher: true
           distribution: temurin
           java-version: '11'
 
@@ -196,7 +198,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: 24.22.1
+          node-version: 24.22.3
           package-manager-cache: false
 
       - name: Setup Bun
@@ -270,7 +272,7 @@ jobs:
       - name: Setup Node.js for npm publishing
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: 24.22.1
+          node-version: 24.22.3
           package-manager-cache: false
           registry-url: https://registry.npmjs.org
 
