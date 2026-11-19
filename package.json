@@ -90,7 +90,7 @@
     "@types/bun": "1.4.4",
     "@types/react": "19.3.0",
     "@typescript/native": "npm:typescript@7.0.2",
-    "eslint": "10.14.0",
+    "eslint": "10.15.0",
     "eslint-config-codemask": "2.2.1",
     "image-size": "2.1.0",
     "braces": "3.0.3",
