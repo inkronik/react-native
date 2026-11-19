@@ -3,7 +3,7 @@
 This test-only harness deliberately terminates or blocks a React Native process to verify Inkronik restart capture. It is outside the npm package,
 has no production export, is disabled by native code outside debug builds, and must never be linked into an application release target.
 
-The native fixture dependencies match the example's exact React Native version (`0.88.0`) on Android and iOS. When upgrading the example, update
+The native fixture dependencies match the example's exact React Native version (`0.88.1`) on Android and iOS. When upgrading the example, update
 both native fixture pins and regenerate `example/ios/Podfile.lock` with CocoaPods `1.17.0` in the same change. CI uses that exact CocoaPods version
 and installs the lockfile in deployment mode, then builds the
 current iOS example and fixture; the separate React Native `0.65` jobs continue checking the public SDK's compatibility floor. The example's
