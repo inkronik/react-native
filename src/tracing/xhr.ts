@@ -4,6 +4,8 @@ import { sanitizeUrl } from '../privacy/sanitize.js'
 import { createTraceContext, secureRandomBytes, toTraceparent } from './trace-context.js'
 import type { InstrumentXhrInput, XhrRequestState } from './types.js'
 
+const originalXhrSend = Symbol.for('inkronik.native.originalXhrSend')
+
 const resolveUrl = (value: unknown): URL | undefined => {
     if (typeof value !== 'string') {
         return undefined
@@ -42,10 +44,15 @@ export const installGlobalXhrInstrumentation = ({
     const originalOpen = prototype.open
     const originalSend = prototype.send
     const originalSetRequestHeader = prototype.setRequestHeader
+    if (Reflect.get(originalSend, originalXhrSend) !== undefined) return () => undefined
     const states = new WeakMap<XMLHttpRequest, XhrRequestState>()
     const completed = new WeakSet<XMLHttpRequest>()
 
     const instrumentedOpen = function (this: XMLHttpRequest, ...argumentsList: ReadonlyArray<unknown>): unknown {
+        const previous = states.get(this)
+        const result = Reflect.apply(originalOpen, this, argumentsList)
+        previous?.cancel?.()
+        completed.delete(this)
         const requestUrl = resolveUrl(argumentsList[1])
         const rawMethod = argumentsList[0]
         const method = (typeof rawMethod === 'string' ? rawMethod : 'GET').toUpperCase()
@@ -56,10 +63,11 @@ export const installGlobalXhrInstrumentation = ({
             states.set(this, { method, requestUrl })
         }
 
-        return Reflect.apply(originalOpen, this, argumentsList)
+        return result
     }
 
     const instrumentedSetRequestHeader = function (this: XMLHttpRequest, ...argumentsList: ReadonlyArray<unknown>): unknown {
+        const result = Reflect.apply(originalSetRequestHeader, this, argumentsList)
         const rawName = argumentsList[0]
         const rawValue = argumentsList[1]
         const name = typeof rawName === 'string' ? rawName : ''
@@ -70,13 +78,15 @@ export const installGlobalXhrInstrumentation = ({
             states.set(this, { ...state, parentTraceparent: value })
         }
 
-        return Reflect.apply(originalSetRequestHeader, this, argumentsList)
+        return result
     }
 
     const instrumentedSend = function (this: XMLHttpRequest, ...argumentsList: ReadonlyArray<unknown>): unknown {
         const state = states.get(this)
 
-        if (state === undefined) {
+        // fetch may be implemented using XHR. Its traceparent already owns the span;
+        // appending another value makes the W3C header invalid and double-counts calls.
+        if (state === undefined || state.parentTraceparent !== undefined) {
             return Reflect.apply(originalSend, this, argumentsList)
         }
 
@@ -120,8 +130,12 @@ export const installGlobalXhrInstrumentation = ({
             })
         }
         const onLoadEnd = (): void => {
+            this.removeEventListener('readystatechange', onReadyStateChange)
             this.removeEventListener('loadend', onLoadEnd)
             finish(this.status >= 200 && this.status < 300 ? 'ok' : 'error')
+        }
+        const onReadyStateChange = (): void => {
+            if (this.readyState === 4) onLoadEnd()
         }
 
         originalSetRequestHeader.call(this, 'traceparent', toTraceparent(traceContext))
@@ -131,17 +145,28 @@ export const installGlobalXhrInstrumentation = ({
             message: `${state.method} ${safeUrl}`,
             data: { method: state.method, span_id: traceContext.spanId, trace_id: traceContext.traceId, transport: 'xhr', url: safeUrl },
         })
+        this.addEventListener('readystatechange', onReadyStateChange)
         this.addEventListener('loadend', onLoadEnd)
+        states.set(this, {
+            ...state,
+            cancel: () => {
+                this.removeEventListener('readystatechange', onReadyStateChange)
+                this.removeEventListener('loadend', onLoadEnd)
+                finish('error')
+            },
+        })
 
         try {
             return Reflect.apply(originalSend, this, argumentsList)
         } catch (error) {
+            this.removeEventListener('readystatechange', onReadyStateChange)
             this.removeEventListener('loadend', onLoadEnd)
             finish('error')
             throw error
         }
     }
 
+    Reflect.defineProperty(instrumentedSend, originalXhrSend, { value: originalSend })
     prototype.open = instrumentedOpen as typeof prototype.open
     prototype.setRequestHeader = instrumentedSetRequestHeader as typeof prototype.setRequestHeader
     prototype.send = instrumentedSend as typeof prototype.send

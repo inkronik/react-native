@@ -97,6 +97,10 @@ native queue only after a collector `2xx`. It is excluded from the npm package, 
 produce bounded client spans plus safe breadcrumbs. The SDK does not add user identity, cookies, authorization, `baggage`, query values, or
 request/response bodies. The Node SDK continues the trace and resolves the authenticated user independently on the server.
 
+Axios uses this instrumentation automatically; no adapter or request interceptor is needed. XHR instrumentation preserves an existing
+`traceparent` instead of appending a second value. This also avoids duplicate client spans when React Native's fetch transport uses XHR.
+Reopening an XHR starts a new request lifecycle, so subsequent requests remain observable.
+
 For React Navigation, connect route lifecycle events without passing route parameters:
 
 ```tsx
