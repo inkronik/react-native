@@ -30,6 +30,7 @@ export interface InstrumentedRequestInput {
 }
 
 export interface XhrRequestState {
+    readonly cancel?: () => void
     readonly method: string
     readonly requestUrl: URL
     readonly parentTraceparent?: string
