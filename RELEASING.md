@@ -20,6 +20,11 @@ Run the GitHub `Release` workflow with `dry_run: true` first. Stable versions us
 Commit version without changing source history, versions the checked-out source only inside the job, verifies and packs it, hashes the tarball, and
 uploads the exact artifact. Separate compatibility jobs check out the recorded source SHA and must pass before a GitHub release can be created.
 
+Git release tags are the version source of truth. `npm.ignoreVersion` in `.release-it.json` makes release-it calculate the next Conventional Commit
+version from the latest reachable tag rather than the manifest, which is only updated inside the release job. For example, a source manifest still
+at `1.0.1` with tag `v1.0.2` and a new fix must produce `1.0.3`, not attempt to recreate `v1.0.2`. The existing tag-collision check remains enabled.
+CLI regression tests cover stable patch/minor and subsequent RC versions and verify that calculation leaves source, tags and the manifest intact.
+
 Only after reviewing the dry run and parity evidence may the workflow be run with `dry_run: false` and `native_parity_approved: true`. Separate jobs
 create the GitHub release at the recorded source SHA and publish the downloaded, checksum-verified tarball through npm OIDC.
 

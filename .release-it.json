@@ -8,6 +8,7 @@
     "release": false
   },
   "npm": {
+    "ignoreVersion": true,
     "publish": false
   },
   "plugins": {
